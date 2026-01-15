@@ -1,0 +1,34 @@
+#imports
+FROM python:3.9-bullseye
+
+#mssql requirements
+ENV ACCEPT_EULA=Y
+RUN apt-get update -y && apt-get update \
+  && apt-get install -y --no-install-recommends curl gcc g++ gnupg unixodbc unixodbc-dev odbcinst
+
+#sql server odbc driver 
+RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - \
+  && curl https://packages.microsoft.com/config/debian/10/prod.list > /etc/apt/sources.list.d/mssql-release.list \
+  && apt-get update \
+  && ACCEPT_EULA=Y apt-get install -y msodbcsql17 \
+  && echo 'export PATH="$PATH:/opt/mssql-tools/bin"' >> ~/.bash_profile \
+  && echo 'export PATH="$PATH:/opt/mssql-tools/bin"' >> ~/.bashrc
+
+#working directory
+WORKDIR /app
+
+#copy files to app directory
+COPY . .
+
+#upgrade pip
+RUN pip install --upgrade pip
+
+#install  requirements
+RUN pip install -r requirements.txt
+RUN apt-get -y clean
+
+#expose port 8000
+EXPOSE 8000
+
+#run the app
+CMD ["python", "app.py"]

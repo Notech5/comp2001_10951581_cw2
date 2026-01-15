@@ -1,0 +1,252 @@
+openapi: 3.0.0
+info:
+  title: "COMP2001 CW2 microservice API"
+  description: "Endpoints to allow users to access the database"
+  version: "2.1.3"
+
+servers:
+  - url: "/api"
+
+components:
+  schemas:
+    User:
+      type: object
+      required:
+        - UserName
+        - FirstName
+        - LastName
+        - Email
+        - TrailID
+      properties:
+        UserID:
+          type: integer
+          readOnly: true
+        UserName:
+          type: string
+        FirstName:
+          type: string
+        LastName:
+          type: string
+        Email:
+          type: string
+        Age:
+          type: integer
+          nullable: true
+        Gender:
+          type: string
+          nullable: true
+        LocationID:
+          type: integer
+        TrailID:
+          type: integer
+        ActivityIDs:
+          type: array
+          items:
+            type: integer
+          description: "List of ActivityIDs the user wants to link to themselves"
+    ProfileView:
+      type: object
+      properties:
+        UserID:
+          type: integer
+        Username:
+          type: string
+        FirstName:
+          type: string
+        LastName:
+          type: string
+        Email:
+          type: string
+        Age:
+          type: string
+        City:
+          type: string
+        Country:
+          type: string
+        ActivityName:
+          type: string
+
+  parameters:
+    FieldParam:
+      name: "field"
+      in: path
+      required: true
+      schema:
+        type: string
+      description: "The user field to filter by (e.g. 'LastName' or 'UserName')"
+    ValueParam:
+      name: "value"
+      in: path
+      required: true
+      schema:
+        type: string
+      description: "The value to match for the specified field"
+
+paths:
+
+  /auth:
+      post:
+        
+        operationId: user.authenticate
+        tags: 
+          - Auth
+        summary: Authenticate user via authenticator API
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - email
+                  - password
+                properties:
+                  email:
+                    type: string
+                    example: tim@plymouth.ac.uk
+                  password:
+                    type: string
+                    example: COMP2001!
+        responses:
+          "200":
+            description: "Success"
+          "400":
+            description: "Missing email or password"
+          "401":
+            description: "Invalid credentials"
+          "500":
+            description: "Internal server error"
+
+  /users: 
+      
+      post: 
+        operationId: "user.create" 
+        tags: 
+          - Users
+        summary: "Create a user profile" 
+        requestBody: 
+            description: "User to create" 
+            required: True 
+            content: 
+              application/json: 
+                schema: 
+                  x-body-name: "user" 
+                  $ref: "#/components/schemas/User" 
+        responses: 
+          "201":
+            description: "User created successfully"
+          "409":
+            description: "User already exists"
+      
+      get: 
+        operationId: "user.read_all" 
+        tags: 
+          - Users
+        summary: "Read the list of all users in the user table" 
+        responses: 
+          "200": 
+            description: "Success"
+      
+
+  /users/{field}/{value}:
+    get:
+      summary: "Read a single user by any field"
+      operationId: "user.read_one"
+      tags:
+        - Users
+      parameters:
+        - $ref: "#/components/parameters/FieldParam"
+        - $ref: "#/components/parameters/ValueParam"
+      responses:
+        "200":
+          description: "User found"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "200":
+          description: "Success"
+        "400":
+          description: "Bad Request"
+        "404":
+          description: "Resource not found"
+        "500":
+          description: "Internal server error"
+
+    put:
+      summary: "Update a user by any field"
+      operationId: "user.update"
+      tags:
+        - Users
+      parameters:
+        - name: field
+          in: path
+          required: true
+          schema:
+            type: string
+          description: "The field to filter the user by (e.g., UserID, LastName)"
+        - name: value
+          in: path
+          required: true
+          schema:
+            type: string
+          description: "The value of the field to match the user"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/User"
+            x-body-name: "body" 
+      responses:
+        "200":
+          description: "User updated successfully"
+        "400":
+          description: "Bad request"
+        "404":
+          description: "User not found"
+        "500":
+          description: "Database error"
+
+    delete:
+      summary: "Delete a user by any field"
+      operationId: "user.delete"
+      tags:
+        - Users
+      parameters:
+        - $ref: "#/components/parameters/FieldParam"
+        - $ref: "#/components/parameters/ValueParam"
+      responses:
+        "200":
+          description: "Success"
+        "400":
+          description: "Bad Request"
+        "404":
+          description: "Resource not found"
+        "500":
+          description: "Internal server error"
+
+  #view endpoint
+  /profiles:
+      get:
+        summary: "Get all user profiles"
+        operationId: "user.get_user_profiles"
+        tags:
+          - Users
+        responses:
+          "200":
+            description: "Success"
+            content:
+              application/json:
+                schema:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/ProfileView"
+          "404":
+            description: "Resource not found"
+          "500":
+            description: "Internal server error"
+
+
+
+

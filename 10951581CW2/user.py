@@ -135,7 +135,7 @@ def read_one(field, value):
     global email
 
     try:
-        # Retrieve the user
+        #retrieve the user specified
         user = User.query.filter(getattr(User, field) == value).one_or_none()
 
         if authorised and user is None:
@@ -146,7 +146,7 @@ def read_one(field, value):
 
             abort(404, f"Resource not found")
 
-        # Permission check
+        #permission check
         if authorised or (email is not None and user.Email == email):
 
             return user_schema.dump(user)
@@ -172,17 +172,17 @@ def update(field, value, body):
     global email
 
     try:
-        # find user
+        #find user
         user = User.query.filter(getattr(User, field) == value).one_or_none()
 
         if user is None:
             abort(404, f"User with {field} '{value}' not found")
 
-        # permission check
+        #permission check
         if not authorised and user.Email != email:
             abort(403, "Forbidden")
 
-        # update user fields
+        #update user fields
         updated_user = user_schema.load(
             body,
             instance=user,
@@ -192,9 +192,10 @@ def update(field, value, body):
 
         db.session.commit()
 
-        # optional ActivityIDs handling
+        #activittyID handling
         activity_ids = body.get("ActivityIDs")
         if activity_ids is not None:
+            #avoid duplicates
             # remove existing preferences
             PreferredActivity.query.filter_by(UserID=user.UserID).delete()
 
